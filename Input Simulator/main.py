@@ -1,6 +1,7 @@
 import os
 import random
 import time
+import threading
 from quixstreams import Application, State
 from quixstreams.models.serializers.quix import QuixTimeseriesSerializer
 
