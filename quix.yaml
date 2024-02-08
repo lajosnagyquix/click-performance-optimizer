@@ -9,7 +9,7 @@ deployments:
   - name: Input Simulator
     application: Input Simulator
     deploymentType: Service
-    version: 6c6a197dc9cc907aba13043ad662917b55f6d452
+    version: 0a1400b9aa6bcf81d62d92481f79992a2b47a2a3
     resources:
       cpu: 50
       memory: 100
