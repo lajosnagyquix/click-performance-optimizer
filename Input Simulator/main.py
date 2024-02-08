@@ -77,10 +77,15 @@ def generate_random_event():
     }
 
 if __name__ == "__main__":
+    def run_app():
+        app.run(sdf)
+
+    t = threading.Thread(target=run_app)
+    t.start()
+
     while True:
         event = generate_random_event()
         print(event)
         sdf = sdf.apply(event)
-        app.run(sdf)
         sleep_time = random.uniform(0.2, 5.0)  # Sleep for a random time between 0.5 and 3 seconds
         time.sleep(sleep_time)
