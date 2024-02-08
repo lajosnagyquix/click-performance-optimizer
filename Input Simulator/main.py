@@ -59,6 +59,8 @@ def generate_random_event():
     error_message = generate_random_choice(error_messages) if bool(random.randint(0, 1)) else None
 
     return {
+        "timestamp": timestamp,
+        "event_type": event_type,  # "user signup", "purchase", "login
         "session_id": session_id,
         "user_id": user_id,
         "device_type": device_type,
