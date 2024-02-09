@@ -39,7 +39,7 @@ deployments:
   - name: fraud shield
     application: fraud shield
     deploymentType: Service
-    version: 20a7560e939f90dad5dc9aebdb6c66bb2e79e809
+    version: ea41dcf2a7d4a766451f22f8e988f130218a2dbf
     resources:
       cpu: 200
       memory: 500
