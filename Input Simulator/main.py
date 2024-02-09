@@ -13,7 +13,7 @@ from quixstreams import Application
 from quixstreams.platforms.quix import QuixKafkaConfigsBuilder, TopicCreationConfigs
 
 
-app = Application.Quix()
+app = Application.Quix(str(uuid.uuid4()))
 
 output_topic = app.topic(os.environ["output"], value_serializer="json")
 
