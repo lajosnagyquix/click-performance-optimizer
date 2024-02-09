@@ -1,5 +1,5 @@
 import os
-from random import randint, random, choice
+from random import randint, random, choice, uniform
 import time
 import threading
 import json
@@ -13,10 +13,11 @@ from quixstreams import Application
 from quixstreams.platforms.quix import QuixKafkaConfigsBuilder, TopicCreationConfigs
 
 
-app = Application.Quix(str(uuid.uuid4()))
+app = Application.Quix()
 
 output_topic = app.topic(os.environ["output"], value_serializer="json")
 
+consumer_group = app.consumer_group("qlix_raw")
 
 def generate_random_choice(choices):
     return random.choice(choices)
