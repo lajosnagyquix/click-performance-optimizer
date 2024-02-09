@@ -15,9 +15,7 @@ from quixstreams.platforms.quix import QuixKafkaConfigsBuilder, TopicCreationCon
 
 app = Application.Quix()
 
-output_topic = app.topic(os.environ["output"], value_serializer=QuixTimeseriesSerializer())
-
-
+output_topic = app.topic(os.environ["output"], value_serializer="json")
 
 
 def generate_random_choice(choices):
