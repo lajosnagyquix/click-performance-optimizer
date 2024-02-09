@@ -3,6 +3,7 @@ from random import randint, random, choice
 import time
 import threading
 import json
+import uuid
 from quixstreams.kafka import Producer
 from quixstreams.models.serializers import (
     QuixTimeseriesSerializer,
@@ -90,6 +91,7 @@ if __name__ == "__main__":
         with app.get_producer() as producer:
             producer.produce(
                 topic=topic,
+                headers=[("uuid", str(uuid.uuid4()))],
                 key=event["user_id"],
                 value=json.dumps(event),
             )
