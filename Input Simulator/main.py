@@ -34,7 +34,7 @@ def generate_random_event():
     creative_alternatives = ["With borders", "jim's idea", "with green borders"]
     creative_alternative = generate_random_choice(creative_alternatives)
 
-    user_id = f"user-{random.randint(1, 100000)}"
+    user_id = f"user-{random.randint(1, 20)}"
     session_id = f"session-{random.randint(1, 10000)}"
 
 
