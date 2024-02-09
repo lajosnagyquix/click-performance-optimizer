@@ -21,6 +21,21 @@ deployments:
         description: Name of the output topic to write to.
         required: true
         value: click_data_raw
+  - name: Input Simulator 2
+    application: Input Simulator
+    deploymentType: Service
+    version: b455a0782407a6f709815327d3476a944f208d47
+    resources:
+      cpu: 50
+      memory: 100
+      replicas: 2
+    desiredStatus: Running
+    variables:
+      - name: output
+        inputType: OutputTopic
+        description: Name of the output topic to write to.
+        required: true
+        value: click_data_raw
 
 # This section describes the Topics of the data pipeline
 topics:
