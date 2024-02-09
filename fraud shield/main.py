@@ -46,7 +46,7 @@ def process_event_with_window(event, state: State):
 # Apply this function similarly to the previous example
 
 
-app = Application.Quix("transformation-v1", auto_offset_reset="latest")
+app = Application.Quix("transformation-v1")
 input_topic = app.topic(os.environ["input"], value_deserializer="json")
 output_topic = app.topic(os.environ["output"], value_serializer="json")
 
