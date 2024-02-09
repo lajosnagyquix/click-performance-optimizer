@@ -23,25 +23,36 @@ def generate_random_choice(choices):
 def generate_random_event():
     timestamp = int(random.uniform(time.time() - 7 * 24 * 60 * 60, time.time()) * 1000)
 
-    event_types = ["user signup", "purchase", "login"]
+    event_types = ["click", "impression", "collapse", "abandonment", "purchase", "error"]
     event_type = generate_random_choice(event_types)
+
+    # how long it took from render to action
+    action_time = int(random.uniform(timestamp, time.time()) * 1000)
+
+    campaign_id = f"campaign-{random.randint(1, 20)}"
+
+    creative_alternatives = ["With borders", "jim's idea", "with green borders"]
+    creative_alternative = generate_random_choice(creative_alternatives)
 
     user_id = f"user-{random.randint(1, 100000)}"
     session_id = f"session-{random.randint(1, 10000)}"
 
-    device_types = ["desktop", "mobile"]
+
+    device_types = ["desktop", "mobile", "appliance"]
     device_type = generate_random_choice(device_types)
 
-    operating_systems = ["Windows", "macOS", "Android", "iOS"]
+    operating_systems = ["Windows", "macOS", "Android", "iOS", "embedded"]
     operating_system = generate_random_choice(operating_systems)
 
-    browser_types = ["Chrome", "Firefox", "Safari"]
+    browser_types = ["Chrome", "Firefox", "Safari", "curl"]
     browser_type = generate_random_choice(browser_types)
+
+    browser_fingerprint_hash = str(uuid.uuid8())
 
     screen_resolutions = ["1920x1080", "1280x720", "1024x768", "800x600", "480x320"]
     screen_resolution = generate_random_choice(screen_resolutions)
 
-    locations = ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix"]
+    locations = ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "EMEA", "APAC", "LATAM"]
     location = generate_random_choice(locations)
 
     referrers = ["https://www.google.com/", "https://www.yahoo.com/", "https://www.bing.com/"]
@@ -60,27 +71,31 @@ def generate_random_event():
         field: random.uniform(0, 60) if field == "duration" else random.randint(200, 500) for field in event_properties_fields
     }
 
-    version_number = f"v{random.randint(1, 10)}"
+    creative_iteration = f"v{random.randint(1, 10)}"
 
-    error_messages = ["Error 404: Page not found", "Internal server error"]
-    error_message = generate_random_choice(error_messages) if bool(random.randint(0, 1)) else None
+    error_code = random.randint(300, 599)
+    if event_type != "error":
+        error_code = None
 
     return {
         "timestamp": timestamp,
-        "event_type": event_type,  # "user signup", "purchase", "login
+        "event_type": event_type,
+        "campaign_id": campaign_id,
+        "creative_alternative": creative_alternative,
         "session_id": session_id,
         "user_id": user_id,
         "device_type": device_type,
         "operating_system": operating_system,
         "browser_type": browser_type,
+        "browser_fingerprint_hash": browser_fingerprint_hash,
         "screen_resolution": screen_resolution,
         "location": location,
         "referrer": referrer,
         "event_data": event_data,
         "user_attributes": user_attributes,
         "event_properties": event_properties,
-        "version_number": version_number,
-        "error_message": error_message,
+        "creative_iteration": creative_iteration,
+        "error_code": error_code,
     }
 
 if __name__ == "__main__":
