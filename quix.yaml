@@ -29,7 +29,7 @@ deployments:
       cpu: 50
       memory: 100
       replicas: 2
-    desiredStatus: Stopped
+    desiredStatus: Running
     variables:
       - name: output
         inputType: OutputTopic
