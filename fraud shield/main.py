@@ -1,26 +1,21 @@
 import os
-from quixstreams import Application, State
+from quixstreams import Application
+from datetime import timedelta
 
-def detect_rapid_retries(row, state: State):
-    # Check for rapid retries and update state
-    rapid_retry = state.get("user_id") == row["user_id"] and row["timestamp"] - state.get("timestamp", 0) < 10000 and row["event_type"] == state.get("event_type")
-    # print to console
-    print(f"Rapid retry detected: {rapid_retry} from user {row['user_id']}")
-    row["rapid_retry"] = rapid_retry
-    # Update state with current row's info
-    state.set("user_id", row["user_id"])
-    state.set("timestamp", row["timestamp"])
-    state.set("event_type", row["event_type"])
-    return row
+def custom_filter(row):
+    rapid_retry_threshold = 3  # Threshold for rapid retries
+    multiple_success_threshold = 2  # Threshold for multiple successes
 
-def detect_multiple_success_events(row, state: State):
-    # Check for multiple success events and update state
-    multiple_success = state.get("user_id") == row["user_id"] and row["event_type"] in ["click", "purchase"]
-    # print to console
-    print(f"Multiple success events detected: {multiple_success} from user {row['user_id']}")
-    row["multiple_success"] = multiple_success
-    # Note: No state update needed here for the purpose of this function
-    return row
+    event_count = row.get('event_count', 0)
+    event_type = row.get('event_type', '')
+
+    if event_type in ['click', 'purchase'] and event_count > multiple_success_threshold:
+        print(f"Multi-success: Filtering out event_type: {event_type} with event_count: {event_count}")
+        return False
+    elif event_count > rapid_retry_threshold:
+        print(f"Rapid_retry: Filtering out event_type: {event_type} with event_count: {event_count}")
+        return False
+    return True
 
 app = Application.Quix("transformation-v1", auto_offset_reset="latest")
 
@@ -29,16 +24,17 @@ output_topic = app.topic(os.environ["output"], value_serializer="json")
 
 sdf = app.dataframe(input_topic)
 
-# Apply transformations with stateful processing
-sdf = sdf.apply(detect_rapid_retries, stateful=True)
-sdf = sdf.apply(detect_multiple_success_events, stateful=True)
+# Define a tumbling window of 10 seconds
+windowed_sdf = sdf.tumbling_window(duration_ms=timedelta(seconds=10), grace_ms=timedelta(seconds=1))
 
-# Filter out rows where rapid_retry or multiple_success is True
-sdf = sdf.filter(lambda row: not row.get("rapid_retry", False))
-sdf = sdf.filter(lambda row: not row.get("multiple_success", False))
-# produce console output
-# Output the filtered sdf to the output topic
-sdf = sdf.to_topic(output_topic)
+# Aggregate counts by user_id and event_type within each window
+aggregated_sdf = windowed_sdf.group_by("user_id", "event_type").count(name="event_count")
+
+# Filter aggregated results using the custom logic
+filtered_sdf = aggregated_sdf.filter(custom_filter)
+
+# Output the filtered data to the output topic
+filtered_sdf.to_topic(output_topic)
 
 if __name__ == "__main__":
-    app.run(sdf)
+    app.run(filtered_sdf)
