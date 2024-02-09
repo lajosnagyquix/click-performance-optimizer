@@ -1,21 +1,22 @@
 import os
 from quixstreams import Application, State
-from quixstreams.models.serializers.quix import QuixDeserializer, QuixTimeseriesSerializer
 
+def detect_rapid_retries(row, state: State):
+    # Check for rapid retries and update state
+    rapid_retry = state.get("user_id") == row["user_id"] and row["timestamp"] - state.get("timestamp", 0) < 10000 and row["event_type"] == state.get("event_type")
+    row["rapid_retry"] = rapid_retry
+    # Update state with current row's info
+    state.set("user_id", row["user_id"])
+    state.set("timestamp", row["timestamp"])
+    state.set("event_type", row["event_type"])
+    return row
 
-def detect_rapid_retries(row, state):
-    # if user id is the same as the previous event, and the time difference is less than 10 seconds, then it's a rapid retry
-    if state.get("user_id") == row["user_id"] and row["timestamp"] - state.get("timestamp") < 10000:
-        row["rapid_retry"] = True
-    else:
-        row["rapid_retry"] = False
-
-def detect_multiple_success_events(row, state):
-    # if user id is the same as one in the trailing window, and the event type is success, then it's a multiple success event, success events are click or purchase
-    if state.get("user_id") == row["user_id"] and row["event_type"] in ["click", "purchase"]:
-        row["multiple_success"] = True
-    else:
-        row["multiple_success"] = False
+def detect_multiple_success_events(row, state: State):
+    # Check for multiple success events and update state
+    multiple_success = state.get("user_id") == row["user_id"] and row["event_type"] in ["click", "purchase"]
+    row["multiple_success"] = multiple_success
+    # Note: No state update needed here for the purpose of this function
+    return row
 
 app = Application.Quix("transformation-v1", auto_offset_reset="latest")
 
@@ -24,25 +25,15 @@ output_topic = app.topic(os.environ["output"], value_serializer="json")
 
 sdf = app.dataframe(input_topic)
 
-# Here put transformation logic.
-# if "rapid_retry" in sdf.columns:
-#     # drop the row if it's a rapid retry
-#     sdf = sdf.filter(lambda row: not row["rapid_retry"])
-#     # print a message for each rapid retry
-#     rapid_retries = sdf.filter(lambda row: row["rapid_retry"])
+# Apply transformations with stateful processing
+sdf = sdf.apply(detect_rapid_retries, stateful=True)
+sdf = sdf.apply(detect_multiple_success_events, stateful=True)
 
-# if "multiple_success" in sdf.columns:
-#     # drop the row if it's a multiple success event
-#     sdf = sdf.filter(lambda row: not row["multiple_success"])
-#     # print a message for each multiple success event
-#     multiple_success = sdf.filter(lambda row: row["multiple_success"])
+# Filter out rows where rapid_retry or multiple_success is True
+sdf = sdf.filter(lambda row: not row.get("rapid_retry", False))
+sdf = sdf.filter(lambda row: not row.get("multiple_success", False))
 
-detect_multiple_success_events(sdf, State())
-detect_rapid_retries(sdf, State())
-
-
-sdf = sdf.update(lambda row: print(row))
-
+# Output the filtered sdf to the output topic
 sdf = sdf.to_topic(output_topic)
 
 if __name__ == "__main__":
