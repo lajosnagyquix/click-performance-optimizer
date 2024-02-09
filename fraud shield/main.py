@@ -5,8 +5,8 @@ from quixstreams.models.serializers.quix import QuixDeserializer, QuixTimeseries
 
 app = Application.Quix("transformation-v1", auto_offset_reset="latest")
 
-input_topic = app.topic(os.environ["input"], value_deserializer=QuixDeserializer())
-output_topic = app.topic(os.environ["output"], value_serializer=QuixTimeseriesSerializer())
+input_topic = app.topic(os.environ["input"], value_deserializer="json")
+output_topic = app.topic(os.environ["output"], value_serializer="json")
 
 sdf = app.dataframe(input_topic)
 
