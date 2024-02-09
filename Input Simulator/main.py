@@ -1,5 +1,5 @@
 import os
-from random import randint, choice, uniform as random
+import random
 import time
 import threading
 import json
