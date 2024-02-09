@@ -96,7 +96,7 @@ if __name__ == "__main__":
     while True:
         event = generate_random_event()
         print(event)
-        t = threading.Thread(target=produce_event, args=(event, output_topic))
+        t = threading.Thread(target=produce_event, args=(event, output_topic.name))
         t.start()
 
         sleep_time = random.uniform(0.2, 5.0)  # Sleep for a random time between 0.2 and 5 seconds
