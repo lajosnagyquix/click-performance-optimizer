@@ -17,6 +17,7 @@ app = Application.Quix()
 
 output_topic = app.topic(os.environ["output"], value_serializer="json")
 
+consumer_group = app.consumer_group("qlix_raw")
 
 def generate_random_choice(choices):
     return random.choice(choices)
