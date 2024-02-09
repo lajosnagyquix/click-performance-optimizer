@@ -37,11 +37,11 @@ def process_event_with_window(event, state: State):
     # Filtering logic based on threshold
     if count > rapid_retry_threshold:
         print(f"Threshold exceeded for {user_id}, {event_type}. Count: {count}")
-        # Implement your action for exceeding threshold here (e.g., filter out the event)
-        return False
+        event['filter_out'] = True  # Flag this event to be filtered out
     else:
-        # Event is within threshold limits
-        return True
+        event['filter_out'] = False  # This event does not exceed the threshold
+
+    return event  # Return the modified event
 
 # Apply this function similarly to the previous example
 
@@ -55,6 +55,9 @@ sdf = app.dataframe(input_topic)
 # Apply the stateful processing function to each event
 
 sdf_processed = sdf.apply(process_event_with_window, stateful=True)
+
+sdf_filtered = sdf_processed.filter(lambda event: not event['filter_out'])
+
 
 # Output the processed data to the output topic
 # This step would include only events that passed the filtering logic
