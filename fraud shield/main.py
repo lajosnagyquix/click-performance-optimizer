@@ -1,40 +1,64 @@
 import os
-from quixstreams import Application
+from quixstreams import Application, State
 from datetime import timedelta
 
-def custom_filter(row):
-    rapid_retry_threshold = 3  # Threshold for rapid retries
-    multiple_success_threshold = 2  # Threshold for multiple successes
-
-    event_count = row.get('event_count', 0)
-    event_type = row.get('event_type', '')
-
-    if event_type in ['click', 'purchase'] and event_count > multiple_success_threshold:
-        print(f"Multi-success: Filtering out event_type: {event_type} with event_count: {event_count}")
+def process_event_with_window(event, state: State):
+    user_id = event["user_id"]
+    event_type = event["event_type"]
+    current_timestamp = event["timestamp"]  # Assuming 'timestamp' is in milliseconds
+    
+    # Keys for state management
+    count_key = f"{user_id}-{event_type}-count"
+    start_time_key = f"{user_id}-{event_type}-start"
+    
+    # Window length in milliseconds (e.g., 10 seconds)
+    window_length_ms = 10000
+    
+    # Retrieve or initialize state
+    count = state.get(count_key, default=0)
+    start_timestamp = state.get(start_time_key, default=current_timestamp)
+    
+    # Check if current event is within the window length from the start
+    if current_timestamp - start_timestamp > window_length_ms:
+        # Window has expired, reset count and start timestamp
+        count = 1  # Reset count for new window
+        start_timestamp = current_timestamp  # Reset window start time
+    else:
+        # Increment count within the current window
+        count += 1
+    
+    # Update state
+    state.set(count_key, count)
+    state.set(start_time_key, start_timestamp)
+    
+    # Define threshold for action (e.g., filtering)
+    rapid_retry_threshold = 3
+    
+    # Filtering logic based on threshold
+    if count > rapid_retry_threshold:
+        print(f"Threshold exceeded for {user_id}, {event_type}. Count: {count}")
+        # Implement your action for exceeding threshold here (e.g., filter out the event)
         return False
-    elif event_count > rapid_retry_threshold:
-        print(f"Rapid_retry: Filtering out event_type: {event_type} with event_count: {event_count}")
-        return False
-    return True
+    else:
+        # Event is within threshold limits
+        return True
+
+# Apply this function similarly to the previous example
+
 
 app = Application.Quix("transformation-v1", auto_offset_reset="latest")
-
 input_topic = app.topic(os.environ["input"], value_deserializer="json")
 output_topic = app.topic(os.environ["output"], value_serializer="json")
 
 sdf = app.dataframe(input_topic)
 
-# Define a tumbling window of 10 seconds
-windowed_sdf = sdf.tumbling_window(duration_ms=timedelta(seconds=10), grace_ms=timedelta(seconds=1))
+# Apply the stateful processing function to each event
 
-# Aggregate counts by user_id and event_type within each window
-aggregated_sdf = windowed_sdf.group_by("user_id", "event_type").count(name="event_count")
+sdf_processed = sdf.apply(process_event_with_window, stateful=True)
 
-# Filter aggregated results using the custom logic
-filtered_sdf = aggregated_sdf.filter(custom_filter)
-
-# Output the filtered data to the output topic
-filtered_sdf.to_topic(output_topic)
+# Output the processed data to the output topic
+# This step would include only events that passed the filtering logic
+sdf_processed.to_topic(output_topic)
 
 if __name__ == "__main__":
-    app.run(filtered_sdf)
+    app.run(sdf_processed)
