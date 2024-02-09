@@ -13,7 +13,7 @@ from quixstreams import Application
 from quixstreams.platforms.quix import QuixKafkaConfigsBuilder, TopicCreationConfigs
 
 
-app = Application()
+app = Application.Quix()
 
 output_topic = app.topic(os.environ["output"], value_serializer=QuixTimeseriesSerializer())
 
