@@ -58,7 +58,7 @@ sdf_processed = sdf.apply(process_event_with_window, stateful=True)
 
 # Output the processed data to the output topic
 # This step would include only events that passed the filtering logic
-sdf_processed.to_topic(output_topic)
+sdf_processed = sdf_processed.to_topic(output_topic)
 
 if __name__ == "__main__":
     app.run(sdf_processed)
