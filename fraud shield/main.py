@@ -25,17 +25,20 @@ output_topic = app.topic(os.environ["output"], value_serializer="json")
 sdf = app.dataframe(input_topic)
 
 # Here put transformation logic.
-if "rapid_retry" in sdf.columns:
-    # drop the row if it's a rapid retry
-    sdf = sdf.filter(lambda row: not row["rapid_retry"])
-    # print a message for each rapid retry
-    rapid_retries = sdf.filter(lambda row: row["rapid_retry"])
+# if "rapid_retry" in sdf.columns:
+#     # drop the row if it's a rapid retry
+#     sdf = sdf.filter(lambda row: not row["rapid_retry"])
+#     # print a message for each rapid retry
+#     rapid_retries = sdf.filter(lambda row: row["rapid_retry"])
 
-if "multiple_success" in sdf.columns:
-    # drop the row if it's a multiple success event
-    sdf = sdf.filter(lambda row: not row["multiple_success"])
-    # print a message for each multiple success event
-    multiple_success = sdf.filter(lambda row: row["multiple_success"])
+# if "multiple_success" in sdf.columns:
+#     # drop the row if it's a multiple success event
+#     sdf = sdf.filter(lambda row: not row["multiple_success"])
+#     # print a message for each multiple success event
+#     multiple_success = sdf.filter(lambda row: row["multiple_success"])
+
+detect_multiple_success_events(sdf, State())
+detect_rapid_retries(sdf, State())
 
 
 sdf = sdf.update(lambda row: print(row))
