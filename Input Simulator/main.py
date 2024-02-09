@@ -1,15 +1,28 @@
 import os
-import random
+from random import randint, random, choice
 import time
 import threading
-from quixstreams import Application, State
-from quixstreams.models.serializers.quix import QuixTimeseriesSerializer
+import json
+from quixstreams.kafka import Producer
+from quixstreams.models.serializers import (
+    QuixTimeseriesSerializer,
+    SerializationContext,
+)
+from quixstreams import Application
+from quixstreams.platforms.quix import QuixKafkaConfigsBuilder, TopicCreationConfigs
 
-app = Application.Quix("transformation-v1", auto_offset_reset="latest")
+cfg_builder = QuixKafkaConfigsBuilder()
+
+app = Application()
 
 output_topic = app.topic(os.environ["output"], value_serializer=QuixTimeseriesSerializer())
 
-sdf = app.dataframe(output_topic)
+cfgs, topics, _ = cfg_builder.get_confluent_client_configs([topic])
+topic = topics[0]
+cfg_builder.create_topics([TopicCreationConfigs(name=topic)])
+serialize = QuixTimeseriesSerializer()
+
+
 
 def generate_random_choice(choices):
     return random.choice(choices)
@@ -78,16 +91,20 @@ def generate_random_event():
     }
 
 if __name__ == "__main__":
-    def run_app():
-        app.run(sdf)
-
-    t = threading.Thread(target=run_app)
-    t.start()
+    def produce_event(event, topic):
+        with app.get_producer() as producer:
+            headers = {}  # Define headers here or pass it as an argument
+            producer.produce(
+                topic=topic,
+                key=event["user_id"],
+                value=json.dumps(event),
+            )
 
     while True:
         event = generate_random_event()
         print(event)
-        sdf = sdf.apply(event)
-        sdf = sdf.to_topic(output_topic)
-        sleep_time = random.uniform(0.2, 5.0)  # Sleep for a random time between 0.5 and 3 seconds
+        t = threading.Thread(target=produce_event, args=(event, output_topic))
+        t.start()
+
+        sleep_time = random.uniform(0.2, 5.0)  # Sleep for a random time between 0.2 and 5 seconds
         time.sleep(sleep_time)
