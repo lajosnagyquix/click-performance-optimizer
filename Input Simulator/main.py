@@ -11,16 +11,11 @@ from quixstreams.models.serializers import (
 from quixstreams import Application
 from quixstreams.platforms.quix import QuixKafkaConfigsBuilder, TopicCreationConfigs
 
-cfg_builder = QuixKafkaConfigsBuilder()
 
 app = Application()
 
 output_topic = app.topic(os.environ["output"], value_serializer=QuixTimeseriesSerializer())
 
-cfgs, topics, _ = cfg_builder.get_confluent_client_configs([topic])
-topic = topics[0]
-cfg_builder.create_topics([TopicCreationConfigs(name=topic)])
-serialize = QuixTimeseriesSerializer()
 
 
 
@@ -93,7 +88,6 @@ def generate_random_event():
 if __name__ == "__main__":
     def produce_event(event, topic):
         with app.get_producer() as producer:
-            headers = {}  # Define headers here or pass it as an argument
             producer.produce(
                 topic=topic,
                 key=event["user_id"],
