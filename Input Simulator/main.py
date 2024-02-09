@@ -47,7 +47,7 @@ def generate_random_event():
     browser_types = ["Chrome", "Firefox", "Safari", "curl"]
     browser_type = generate_random_choice(browser_types)
 
-    browser_fingerprint_hash = str(uuid.uuid8())
+    browser_fingerprint_hash = str(uuid.uuid4())
 
     screen_resolutions = ["1920x1080", "1280x720", "1024x768", "800x600", "480x320"]
     screen_resolution = generate_random_choice(screen_resolutions)
